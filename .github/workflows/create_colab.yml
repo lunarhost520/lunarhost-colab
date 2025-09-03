@@ -1,55 +1,52 @@
-name: Create Colab Notebook
+name: Create Server Notebook
 
 on:
   workflow_dispatch:
     inputs:
       server_name:
-        description: 'Server Name'
+        description: "Server name"
         required: true
-      software:
-        description: 'Software (paper/spigot/purpur)'
+      server_version:
+        description: "Minecraft version"
         required: true
-      version:
-        description: 'Minecraft Version'
+      server_software:
+        description: "Server software"
         required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Generate Notebook
+      - name: Create servers folder
+        run: mkdir -p servers/${{ github.event.inputs.server_name }}
+
+      - name: Generate Colab Notebook
         run: |
-          mkdir -p servers
-          FILE="servers/${{ github.event.inputs.server_name }}.ipynb"
-          cat > $FILE <<EOL
+          cat > servers/${{ github.event.inputs.server_name }}/start_server.ipynb <<'EOF'
           {
             "cells": [
               {
-                "cell_type": "code",
+                "cell_type": "markdown",
                 "metadata": {},
-                "source": [
-                  "!apt-get update -y && apt-get install -y openjdk-17-jdk"
-                ]
+                "source": ["# Start Minecraft Server"]
               },
               {
                 "cell_type": "code",
                 "metadata": {},
                 "source": [
-                  "!wget -O server.jar https://api.papermc.io/v2/projects/${{ github.event.inputs.software }}/versions/${{ github.event.inputs.version }}/builds/1/downloads/${{ github.event.inputs.software }}-${{ github.event.inputs.version }}-1.jar"
-                ]
-              },
-              {
-                "cell_type": "code",
-                "metadata": {},
-                "source": [
-                  "!java -Xmx2G -jar server.jar nogui"
+                  "!wget https://papermc.io/api/v2/projects/${{ github.event.inputs.server_software }}/versions/${{ github.event.inputs.server_version }}/builds/latest/download -O server.jar\n",
+                  "!java -Xmx2G -Xms1G -jar server.jar nogui"
                 ]
               }
             ],
             "metadata": {
+              "colab": {
+                "name": "Start Server"
+              },
               "kernelspec": {
                 "display_name": "Python 3",
                 "language": "python",
@@ -59,18 +56,12 @@ jobs:
             "nbformat": 4,
             "nbformat_minor": 0
           }
-          EOL
+          EOF
 
-      - name: Commit Notebook
+      - name: Commit notebook
         run: |
-          git config --global user.name "Colab Bot"
-          git config --global user.email "bot@lunarhost520.com"
-          git add servers/${{ github.event.inputs.server_name }}.ipynb
-          git commit -m "Added notebook for ${{ github.event.inputs.server_name }}"
+          git config user.name "LunarHost Bot"
+          git config user.email "bot@lunarhost520.github.io"
+          git add servers/${{ github.event.inputs.server_name }}/start_server.ipynb
+          git commit -m "Add notebook for ${{ github.event.inputs.server_name }}"
           git push
-
-      - name: Show Colab Link
-        run: |
-          echo "✅ Notebook created!"
-          echo "🔗 Open in Colab:"
-          echo "https://colab.research.google.com/github/lunarhost520/lunarhost-server/blob/main/servers/${{ github.event.inputs.server_name }}.ipynb"
