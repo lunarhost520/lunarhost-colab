@@ -6,22 +6,25 @@ on:
       server_name:
         description: "Server name"
         required: true
+        type: string
       server_version:
         description: "Minecraft version"
         required: true
+        type: string
       server_software:
-        description: "Server software"
+        description: "Server software (paper/purpur/fabric/forge)"
         required: true
+        type: string
 
 jobs:
-  build:
+  create-notebook:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Create servers folder
+      - name: Create server folder
         run: mkdir -p servers/${{ github.event.inputs.server_name }}
 
       - name: Generate Colab Notebook
@@ -32,20 +35,26 @@ jobs:
               {
                 "cell_type": "markdown",
                 "metadata": {},
-                "source": ["# Start Minecraft Server"]
+                "source": [
+                  "# Minecraft Server - ${{ github.event.inputs.server_name }}",
+                  "",
+                  "Version: ${{ github.event.inputs.server_version }}",
+                  "",
+                  "Software: ${{ github.event.inputs.server_software }}"
+                ]
               },
               {
                 "cell_type": "code",
                 "metadata": {},
                 "source": [
-                  "!wget https://papermc.io/api/v2/projects/${{ github.event.inputs.server_software }}/versions/${{ github.event.inputs.server_version }}/builds/latest/download -O server.jar\n",
+                  "!wget https://api.papermc.io/v2/projects/${{ github.event.inputs.server_software }}/versions/${{ github.event.inputs.server_version }}/builds/latest/download -O server.jar\n",
                   "!java -Xmx2G -Xms1G -jar server.jar nogui"
                 ]
               }
             ],
             "metadata": {
               "colab": {
-                "name": "Start Server"
+                "name": "Start Minecraft Server"
               },
               "kernelspec": {
                 "display_name": "Python 3",
@@ -58,10 +67,9 @@ jobs:
           }
           EOF
 
-      - name: Commit notebook
+      - name: Commit and Push
         run: |
           git config user.name "LunarHost Bot"
           git config user.email "bot@lunarhost520.github.io"
           git add servers/${{ github.event.inputs.server_name }}/start_server.ipynb
-          git commit -m "Add notebook for ${{ github.event.inputs.server_name }}"
-          git push
+          git commit -m "
