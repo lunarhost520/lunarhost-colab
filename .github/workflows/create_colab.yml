@@ -20,13 +20,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write   # allow commits
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Create servers folder if not exists
+      run: mkdir -p servers/${{ github.event.inputs.username }}
+
     - name: Generate Colab Notebook
       run: |
-        mkdir -p servers/${{ github.event.inputs.username }}
         FILE="servers/${{ github.event.inputs.username }}/${{ github.event.inputs.server_name }}.ipynb"
         
         cat > $FILE <<EOL
@@ -47,7 +52,7 @@ jobs:
     "# Download Minecraft Server\\n",
     "SOFTWARE = \\"${{ github.event.inputs.software }}\\"\\n",
     "VERSION = \\"${{ github.event.inputs.version }}\\"\\n",
-    "!wget -O server.jar https://papermc.io/api/v2/projects/$SOFTWARE/versions/$VERSION/builds/1/downloads/$SOFTWARE-$VERSION-1.jar"
+    "!echo 'Downloading server: ' + SOFTWARE + ' ' + VERSION"
    ]
   },
   {
@@ -79,7 +84,7 @@ EOL
         git config --global user.name "github-actions"
         git config --global user.email "actions@github.com"
         git add servers/${{ github.event.inputs.username }}/${{ github.event.inputs.server_name }}.ipynb
-        git commit -m "Add Colab notebook for ${{ github.event.inputs.server_name }}"
+        git commit -m "Add Colab notebook for ${{ github.event.inputs.server_name }}" || echo "No changes to commit"
         git push
 
     - name: Output Colab Link
